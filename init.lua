@@ -74,6 +74,34 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+-- Code folding with treesitter
+vim.opt.foldmethod = 'expr'
+vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+
+local M = {}
+-- function to create a list of commands and convert them to autocommands
+-------- This function is taken from https://github.com/norcalli/nvim_utils
+function M.nvim_create_augroups(definitions)
+  for group_name, definition in pairs(definitions) do
+    vim.api.nvim_command('augroup ' .. group_name)
+    vim.api.nvim_command 'autocmd!'
+    for _, def in ipairs(definition) do
+      local command = table.concat(vim.tbl_flatten { 'autocmd', def }, ' ')
+      vim.api.nvim_command(command)
+    end
+    vim.api.nvim_command 'augroup END'
+  end
+end
+
+local autoCommands = {
+  -- Other autocommands
+  open_folds = {
+    { 'BufReadPost,FileReadPost', '*', 'normal zR' },
+  },
+}
+
+M.nvim_create_augroups(autoCommands)
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -94,12 +122,6 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
-
--- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -146,8 +168,8 @@ require('lazy').setup({
   -- with the first argument being the link and the following
   -- keys can be used to configure plugin behavior/loading/etc.
 
-  require 'kickstart.plugins.comments',
-  require 'kickstart.plugins.git',
+  require 'kickstart.plugins.comments', -- All of the configuration for comments
+  require 'kickstart.plugins.git', -- All of the git configurations
   require 'kickstart.plugins.which-key', -- Useful plugin to show you pending keybinds.
   require 'kickstart.plugins.telescope', -- Fuzzy finder
   require 'kickstart.plugins.lsp', -- Language server plugin
@@ -158,7 +180,7 @@ require('lazy').setup({
   require 'kickstart.plugins.treesitter', -- Highlight, edit, and navigate code
 
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.indent_line',
   { import = 'custom.plugins' },
 }, {
   ui = {
